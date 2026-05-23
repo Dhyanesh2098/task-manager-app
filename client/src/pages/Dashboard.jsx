@@ -27,7 +27,7 @@ import {
 import getActivities from "../services/activityService";
 import { uploadFile } from "../services/fileService";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://task-manager-backend-0e4l.onrender.com");
 
 const columns = ["Backlog", "To Do", "In Progress", "In Review", "Completed"];
 
@@ -473,7 +473,7 @@ function Dashboard() {
 
         {task.attachment && (
           <a
-            href={`http://localhost:5000${task.attachment}`}
+            href={`https://task-manager-backend-0e4l.onrender.com${task.attachment}`}
             target="_blank"
             rel="noreferrer"
           >
