@@ -1,19 +1,15 @@
-import express from "express";
-import mongoose from "mongoose";
-import cors from "cors";
-import dotenv from "dotenv";
-import http from "http";
-import { Server } from "socket.io";
-
-import authRoutes from "./routes/authRoutes.js";
-import taskRoutes from "./routes/taskRoutes.js";
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const http = require("http");
+const path = require("path");
+const { Server } = require("socket.io");
 
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-
-/* ---------------- CORS ---------------- */
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -21,16 +17,6 @@ const allowedOrigins = [
   "http://localhost:5175",
   "https://task-manager-app-kappa-roan.vercel.app",
 ];
-
-app.use(
-  cors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
-
-/* ---------------- SOCKET.IO ---------------- */
 
 const io = new Server(server, {
   cors: {
@@ -40,40 +26,46 @@ const io = new Server(server, {
   },
 });
 
+app.set("io", io);
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/tasks", require("./routes/taskRoutes"));
+app.use("/api/activities", require("./routes/activityRoutes"));
+app.use("/api/upload", require("./routes/uploadRoutes"));
+
 io.on("connection", (socket) => {
-  console.log("User Connected");
+  console.log("User Connected:", socket.id);
+
+  socket.on("taskChanged", () => {
+    io.emit("tasksUpdated");
+  });
 
   socket.on("disconnect", () => {
     console.log("User Disconnected");
   });
 });
 
-/* ---------------- MIDDLEWARE ---------------- */
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-/* ---------------- ROUTES ---------------- */
-
 app.get("/", (req, res) => {
-  res.send("Task Manager Backend Running");
+  res.send("Task Manager API Running...");
 });
-
-app.use("/api/auth", authRoutes);
-app.use("/api/tasks", taskRoutes);
-
-/* ---------------- DATABASE ---------------- */
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB Connected");
-  })
-  .catch((err) => {
-    console.log("MongoDB Error:", err);
-  });
-
-/* ---------------- SERVER ---------------- */
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.log(err));
 
 const PORT = process.env.PORT || 5000;
 
