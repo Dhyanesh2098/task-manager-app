@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/activities/";
+const API_URL = "https://task-manager-backend-0e4l.onrender.com/api/activities/";
 
 const getActivities = async () => {
   const user = JSON.parse(localStorage.getItem("user"));
